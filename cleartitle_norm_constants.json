@@ -1,0 +1,37 @@
+{
+  "honda_ltft_mean": 1.9288234688307981,
+  "toyota_ltft_mean": -4.919190597477652,
+  "honda_stft_mean": 3.9781199692896276,
+  "toyota_stft_mean": -2.3771509503668535,
+  "features": [
+    "LTFT_normalized",
+    "STFT_normalized",
+    "warm_idle_cv",
+    "warm_idle_rpm_mean",
+    "load_mean",
+    "timing_mean",
+    "catalyst_temp_mean",
+    "maf_idle_mean",
+    "coolant_max",
+    "odometer_km",
+    "make_encoded"
+  ],
+  "classes": [
+    "degraded",
+    "healthy",
+    "worn"
+  ],
+  "feature_medians": {
+    "LTFT_normalized": -0.07583637115446895,
+    "STFT_normalized": -0.004849049633146363,
+    "warm_idle_cv": 12.3585,
+    "warm_idle_rpm_mean": 757.0977786171243,
+    "load_mean": 37.482,
+    "timing_mean": 7.448995400581806,
+    "catalyst_temp_mean": 572.1045,
+    "maf_idle_mean": 3.9975,
+    "coolant_max": 88.649,
+    "odometer_km": 116947.5,
+    "make_encoded": 0.5
+  }
+}
