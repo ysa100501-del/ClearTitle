@@ -481,43 +481,106 @@
     /* ── Signal grid ── */
     .signals-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(2, 1fr);
       gap: 12px;
       margin-bottom: 20px;
     }
 
     @media (max-width: 600px) {
-      .signals-grid { grid-template-columns: repeat(2, 1fr); }
+      .signals-grid { grid-template-columns: 1fr; }
     }
 
     .signal-card {
       background: var(--bg);
       border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 14px 16px;
+      padding: 16px 18px;
+      position: relative;
+      overflow: hidden;
     }
 
-    .signal-name {
+    .signal-card::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 3px;
+      border-radius: 8px 0 0 8px;
+    }
+
+    .signal-card.status-good::before   { background: var(--safe); }
+    .signal-card.status-warn::before   { background: var(--warn); }
+    .signal-card.status-bad::before    { background: var(--danger); }
+    .signal-card.status-neutral::before { background: var(--muted); }
+
+    .signal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .signal-label {
       font-family: var(--font-mono);
       font-size: 10px;
       color: var(--muted);
       letter-spacing: 0.1em;
       text-transform: uppercase;
-      margin-bottom: 6px;
     }
 
+    .signal-status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .status-good  .signal-status-dot { background: var(--safe); box-shadow: 0 0 6px var(--safe); }
+    .status-warn  .signal-status-dot { background: var(--warn); box-shadow: 0 0 6px var(--warn); }
+    .status-bad   .signal-status-dot { background: var(--danger); box-shadow: 0 0 6px var(--danger); }
+    .status-neutral .signal-status-dot { background: var(--muted); }
+
     .signal-value {
-      font-size: 18px;
+      font-size: 22px;
       font-weight: 700;
       letter-spacing: -0.02em;
+      line-height: 1;
+      margin-bottom: 6px;
     }
 
     .signal-unit {
       font-family: var(--font-mono);
-      font-size: 10px;
+      font-size: 11px;
       color: var(--muted);
       margin-left: 3px;
     }
+
+    .signal-plain-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .signal-explanation {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .signal-range {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      margin-top: 6px;
+      padding: 3px 8px;
+      border-radius: 3px;
+      display: inline-block;
+    }
+
+    .status-good  .signal-range { background: rgba(61,245,160,0.08); color: var(--safe); }
+    .status-warn  .signal-range { background: rgba(255,184,48,0.08);  color: var(--warn); }
+    .status-bad   .signal-range { background: rgba(255,77,109,0.08);  color: var(--danger); }
+    .status-neutral .signal-range { background: rgba(107,107,128,0.1); color: var(--muted); }
 
     /* ── Disclaimer ── */
     .disclaimer {
@@ -876,24 +939,175 @@
       document.getElementById('val-degraded').textContent = (probs.degraded || 0).toFixed(1) + '%';
     }, 200);
 
-    // Signal cards
-    const signals = [
-      { name: 'LTFT', value: f.LTFT_mean, unit: '%', decimals: 2 },
-      { name: 'STFT', value: f.STFT_mean, unit: '%', decimals: 2 },
-      { name: 'Idle CV', value: f.warm_idle_cv, unit: '%', decimals: 1 },
-      { name: 'Catalyst', value: f.catalyst_temp, unit: '°C', decimals: 0 },
-      { name: 'Coolant Max', value: f.coolant_max, unit: '°C', decimals: 0 },
-      { name: 'PIDs Detected', value: f.pids_detected, unit: '', decimals: 0 },
+    // Signal cards with contextual explanations
+    const make = v.make.toLowerCase();
+
+    function getLTFTStatus(val, make) {
+      if (val === null || val === undefined) return 'neutral';
+      const isToyota = make === 'toyota';
+      // Toyota runs naturally negative LTFT — normalize expectation
+      const normalized = isToyota ? val + 4.5 : val;
+      if (Math.abs(normalized) <= 3) return 'good';
+      if (Math.abs(normalized) <= 7) return 'warn';
+      return 'bad';
+    }
+
+    function getSTFTStatus(val) {
+      if (val === null || val === undefined) return 'neutral';
+      if (Math.abs(val) <= 5) return 'good';
+      if (Math.abs(val) <= 10) return 'warn';
+      return 'bad';
+    }
+
+    function getIdleCVStatus(val) {
+      if (val === null || val === undefined) return 'neutral';
+      if (val <= 10) return 'good';
+      if (val <= 20) return 'warn';
+      return 'bad';
+    }
+
+    function getCatalystStatus(val) {
+      if (val === null || val === undefined) return 'neutral';
+      if (val >= 450 && val <= 750) return 'good';
+      if (val >= 350 && val < 450) return 'warn';
+      return 'bad';
+    }
+
+    function getCoolantStatus(val) {
+      if (val === null || val === undefined) return 'neutral';
+      if (val >= 85) return 'good';
+      if (val >= 70) return 'warn';
+      return 'bad';
+    }
+
+    function getLTFTExplanation(val, make) {
+      if (val === null || val === undefined) return 'Not captured in this session.';
+      const isToyota = make === 'toyota';
+      const normalized = isToyota ? val + 4.5 : val;
+      if (Math.abs(normalized) <= 3) return 'Fuel system is well-balanced. The engine computer isn\'t fighting to compensate for any imbalance.';
+      if (val > 7) return 'Engine is running lean — the computer is adding extra fuel. Could indicate a vacuum leak, weak injector, or dirty MAF sensor.';
+      if (val < -7) return 'Engine is running rich — the computer is reducing fuel. Could indicate a leaking injector, faulty O2 sensor, or fuel pressure issue.';
+      return 'Mild fuel correction detected. Worth monitoring but not immediately concerning at this level.';
+    }
+
+    function getSTFTExplanation(val) {
+      if (val === null || val === undefined) return 'Not captured in this session.';
+      if (Math.abs(val) <= 5) return 'Short-term fuel adjustments are normal. The engine is maintaining proper air-fuel mix without excessive corrections.';
+      if (Math.abs(val) <= 10) return 'Moderate short-term corrections detected. The engine is compensating for something — acceptable if LTFT is also stable.';
+      return 'Large short-term fuel swings detected. This suggests the engine is struggling to maintain proper fuel balance under load.';
+    }
+
+    function getIdleCVExplanation(val) {
+      if (val === null || val === undefined) return 'Engine didn\'t reach operating temp during this session — idle stability could not be measured.';
+      if (val <= 10) return 'Engine idles very smoothly and consistently. This is the strongest single indicator of good engine mechanical health.';
+      if (val <= 20) return 'Some idle instability detected. Could be normal for higher mileage, or may indicate minor issues like dirty fuel injectors or worn spark plugs.';
+      return 'High idle instability — the RPM is fluctuating significantly at warm idle. This is one of the clearest signals of engine wear or mechanical issues.';
+    }
+
+    function getCatalystExplanation(val) {
+      if (val === null || val === undefined) return 'Not captured in this session.';
+      if (val >= 450 && val <= 750) return 'Catalytic converter is operating at a healthy temperature, indicating it\'s working efficiently.';
+      if (val < 350) return 'Catalyst temperature is lower than expected. Could indicate the engine wasn\'t fully warmed up or a catalyst efficiency issue.';
+      return 'Catalyst running hotter than normal. May indicate engine running rich or converter starting to fail.';
+    }
+
+    function getCoolantExplanation(val) {
+      if (val === null || val === undefined) return 'Not captured in this session.';
+      if (val >= 85) return 'Engine reached full operating temperature during this scan. All readings are from a fully warmed engine — most reliable condition.';
+      if (val >= 70) return 'Engine partially warmed. Some readings (especially fuel trims) may still be influenced by the warm-up phase.';
+      return 'Engine never fully warmed up during this session. Fuel trim and idle readings may not reflect the engine\'s true baseline behavior.';
+    }
+
+    function getLTFTRange(make) {
+      return make === 'toyota' ? 'Normal for Toyota: −6% to −2%' : 'Normal for Honda: −2% to +4%';
+    }
+
+    const signalDefs = [
+      {
+        key: 'ltft',
+        label: 'LTFT',
+        plainName: 'Long-Term Fuel Trim',
+        value: f.LTFT_mean,
+        unit: '%',
+        decimals: 2,
+        status: getLTFTStatus(f.LTFT_mean, make),
+        explanation: getLTFTExplanation(f.LTFT_mean, make),
+        range: getLTFTRange(make),
+      },
+      {
+        key: 'stft',
+        label: 'STFT',
+        plainName: 'Short-Term Fuel Trim',
+        value: f.STFT_mean,
+        unit: '%',
+        decimals: 2,
+        status: getSTFTStatus(f.STFT_mean),
+        explanation: getSTFTExplanation(f.STFT_mean),
+        range: 'Normal range: −5% to +5%',
+      },
+      {
+        key: 'idle_cv',
+        label: 'IDLE CV',
+        plainName: 'Idle Stability',
+        value: f.warm_idle_cv,
+        unit: '%',
+        decimals: 1,
+        status: getIdleCVStatus(f.warm_idle_cv),
+        explanation: getIdleCVExplanation(f.warm_idle_cv),
+        range: 'Healthy: under 10% variation',
+      },
+      {
+        key: 'catalyst',
+        label: 'CATALYST TEMP',
+        plainName: 'Catalytic Converter',
+        value: f.catalyst_temp,
+        unit: '°C',
+        decimals: 0,
+        status: getCatalystStatus(f.catalyst_temp),
+        explanation: getCatalystExplanation(f.catalyst_temp),
+        range: 'Healthy range: 450°C – 750°C',
+      },
+      {
+        key: 'coolant',
+        label: 'COOLANT MAX',
+        plainName: 'Engine Temperature',
+        value: f.coolant_max,
+        unit: '°C',
+        decimals: 0,
+        status: getCoolantStatus(f.coolant_max),
+        explanation: getCoolantExplanation(f.coolant_max),
+        range: 'Full operating temp: 85°C+',
+      },
+      {
+        key: 'pids',
+        label: 'PIDS DETECTED',
+        plainName: 'Data Coverage',
+        value: f.pids_detected,
+        unit: '',
+        decimals: 0,
+        status: f.pids_detected >= 8 ? 'good' : f.pids_detected >= 5 ? 'warn' : 'bad',
+        explanation: f.pids_detected >= 8
+          ? 'Good signal coverage. Most key engine parameters were captured successfully in this session.'
+          : f.pids_detected >= 5
+          ? 'Partial signal coverage. Some PIDs dropped out — score is based on available signals only.'
+          : 'Low signal coverage. Several key PIDs were missing. Consider rescanning for a more complete picture.',
+        range: 'Recommended: 8 or more',
+      },
     ];
 
     const grid = document.getElementById('signals-grid');
-    grid.innerHTML = signals.map(sig => `
-      <div class="signal-card">
-        <div class="signal-name">${sig.name}</div>
-        <div class="signal-value">
-          ${sig.value !== null && sig.value !== undefined ? Number(sig.value).toFixed(sig.decimals) : '—'}
-          <span class="signal-unit">${sig.unit}</span>
+    grid.innerHTML = signalDefs.map(sig => `
+      <div class="signal-card status-${sig.status}">
+        <div class="signal-header">
+          <span class="signal-label">${sig.label}</span>
+          <span class="signal-status-dot"></span>
         </div>
+        <div class="signal-value">
+          ${sig.value !== null && sig.value !== undefined ? Number(sig.value).toFixed(sig.decimals) : '—'}<span class="signal-unit">${sig.unit}</span>
+        </div>
+        <div class="signal-plain-name">${sig.plainName}</div>
+        <div class="signal-explanation">${sig.explanation}</div>
+        <div class="signal-range">${sig.range}</div>
       </div>
     `).join('');
 
