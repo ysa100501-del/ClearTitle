@@ -10,16 +10,17 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:        #0a0a0f;
-      --surface:   #13131a;
-      --border:    #222230;
-      --accent:    #c8f135;
-      --accent2:   #3df5a0;
-      --text:      #e8e8f0;
-      --muted:     #6b6b80;
-      --danger:    #ff4d6d;
-      --warn:      #ffb830;
-      --safe:      #3df5a0;
+      --bg:        #0b0f14;
+      --surface:   #161b22;
+      --border:    #2f3744;
+      --accent:    #b7e848;
+      --accent2:   #36d399;
+      --text:      #f2f5f7;
+      --muted:     #a7adba;
+      --subtle:    #7f8795;
+      --danger:    #ff5c7a;
+      --warn:      #f4b740;
+      --safe:      #36d399;
       --font-head: 'Syne', sans-serif;
       --font-mono: 'DM Mono', monospace;
     }
@@ -50,8 +51,8 @@
       position: fixed;
       inset: 0;
       background-image:
-        linear-gradient(rgba(200,241,53,0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(200,241,53,0.03) 1px, transparent 1px);
+        linear-gradient(rgba(183,232,72,0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(183,232,72,0.035) 1px, transparent 1px);
       background-size: 40px 40px;
       pointer-events: none;
       z-index: 0;
@@ -84,8 +85,8 @@
       color: var(--accent);
       letter-spacing: 0.15em;
       text-transform: uppercase;
-      background: rgba(200,241,53,0.08);
-      border: 1px solid rgba(200,241,53,0.2);
+      background: rgba(183,232,72,0.1);
+      border: 1px solid rgba(183,232,72,0.28);
       padding: 3px 8px;
       border-radius: 3px;
     }
@@ -162,7 +163,7 @@
     label {
       font-size: 11px;
       font-family: var(--font-mono);
-      color: var(--muted);
+      color: var(--subtle);
       letter-spacing: 0.1em;
       text-transform: uppercase;
     }
@@ -182,7 +183,7 @@
 
     input:focus, select:focus {
       border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(200,241,53,0.08);
+      box-shadow: 0 0 0 3px rgba(183,232,72,0.1);
     }
 
     select option {
@@ -202,7 +203,7 @@
 
     .upload-zone:hover, .upload-zone.dragover {
       border-color: var(--accent);
-      background: rgba(200,241,53,0.04);
+      background: rgba(183,232,72,0.05);
     }
 
     .upload-zone input[type="file"] {
@@ -260,7 +261,7 @@
     .btn-submit:hover {
       background: #d9ff50;
       transform: translateY(-1px);
-      box-shadow: 0 8px 24px rgba(200,241,53,0.25);
+      box-shadow: 0 8px 24px rgba(183,232,72,0.25);
     }
 
     .btn-submit:active { transform: translateY(0); }
@@ -423,7 +424,7 @@
       font-family: var(--font-mono);
       font-size: 14px;
       color: var(--muted);
-      line-height: 1.6;
+      line-height: 1.7;
     }
 
     /* ── Probability bars ── */
@@ -496,7 +497,7 @@
       border-radius: 8px;
       padding: 16px 18px;
       position: relative;
-      overflow: hidden;
+      overflow: visible;
     }
 
     .signal-card::before {
@@ -522,9 +523,77 @@
     .signal-label {
       font-family: var(--font-mono);
       font-size: 12px;
-      color: var(--muted);
+      color: var(--subtle);
       letter-spacing: 0.1em;
       text-transform: uppercase;
+    }
+
+    .signal-label-wrap {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      min-width: 0;
+      position: relative;
+    }
+
+    .pid-help {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: rgba(167,173,186,0.08);
+      color: var(--muted);
+      cursor: help;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      line-height: 16px;
+      padding: 0;
+      position: relative;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .pid-help:hover,
+    .pid-help:focus {
+      border-color: var(--accent);
+      color: var(--text);
+      background: rgba(183,232,72,0.12);
+      outline: none;
+    }
+
+    .pid-help::after {
+      content: attr(data-tip);
+      position: absolute;
+      top: calc(100% + 10px);
+      left: 50%;
+      transform: translateX(-50%) translateY(4px);
+      width: 260px;
+      max-width: min(260px, 72vw);
+      background: #111720;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: 0 16px 34px rgba(0,0,0,0.38);
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 400;
+      letter-spacing: 0;
+      line-height: 1.55;
+      padding: 12px 14px;
+      text-align: left;
+      text-transform: none;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s ease;
+      z-index: 50;
+    }
+
+    .pid-help:hover::after,
+    .pid-help:focus::after {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(-50%) translateY(0);
     }
 
     .signal-status-dot {
@@ -565,7 +634,7 @@
       font-family: var(--font-mono);
       font-size: 13px;
       color: var(--muted);
-      line-height: 1.5;
+      line-height: 1.65;
     }
 
     .signal-range {
@@ -577,14 +646,14 @@
       display: inline-block;
     }
 
-    .status-good  .signal-range { background: rgba(61,245,160,0.08); color: var(--safe); }
+    .status-good  .signal-range { background: rgba(54,211,153,0.1); color: var(--safe); }
     .status-warn  .signal-range { background: rgba(255,184,48,0.08);  color: var(--warn); }
     .status-bad   .signal-range { background: rgba(255,77,109,0.08);  color: var(--danger); }
-    .status-neutral .signal-range { background: rgba(107,107,128,0.1); color: var(--muted); }
+    .status-neutral .signal-range { background: rgba(167,173,186,0.1); color: var(--muted); }
 
     /* ── Disclaimer ── */
     .disclaimer {
-      background: rgba(107,107,128,0.08);
+      background: rgba(167,173,186,0.08);
       border: 1px solid var(--border);
       border-radius: 8px;
       padding: 16px 20px;
@@ -661,8 +730,8 @@
       font-family: var(--font-mono); font-size: 11px;
       color: var(--muted); transition: all 0.3s; flex-shrink: 0;
     }
-    .step-dot.active { border-color: var(--accent); color: var(--accent); background: rgba(200,241,53,0.08); }
-    .step-dot.done { border-color: var(--safe); background: rgba(61,245,160,0.1); color: var(--safe); }
+    .step-dot.active { border-color: var(--accent); color: var(--accent); background: rgba(183,232,72,0.1); }
+    .step-dot.done { border-color: var(--safe); background: rgba(54,211,153,0.1); color: var(--safe); }
     .step-line { flex: 1; height: 1px; background: var(--border); }
     .step-label { font-family: var(--font-mono); font-size: 10px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
 
@@ -680,7 +749,7 @@
       border-radius: 6px; cursor: pointer; transition: all 0.15s; background: var(--bg);
     }
     .q-option:hover { border-color: var(--muted); }
-    .q-option.selected { border-color: var(--accent); background: rgba(200,241,53,0.06); }
+    .q-option.selected { border-color: var(--accent); background: rgba(183,232,72,0.08); }
     .q-option input[type="radio"] { width: 16px; height: 16px; accent-color: var(--accent); flex-shrink: 0; cursor: pointer; padding: 0; border: none; }
     .q-option-text { font-family: var(--font-mono); font-size: 13px; color: var(--text); line-height: 1.4; }
 
@@ -707,7 +776,7 @@
     .deal-section { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 22px 24px; margin: 20px 0; }
     .deal-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 18px; flex-wrap: wrap; }
     .deal-title { font-size: 18px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 6px; }
-    .deal-copy { font-family: var(--font-mono); font-size: 12px; color: var(--muted); line-height: 1.6; max-width: 520px; }
+    .deal-copy { font-family: var(--font-mono); font-size: 12px; color: var(--muted); line-height: 1.7; max-width: 520px; }
     .btn-secondary {
       background: transparent;
       border: 1px solid var(--accent);
@@ -722,7 +791,7 @@
       transition: all 0.2s;
       flex-shrink: 0;
     }
-    .btn-secondary:hover { background: rgba(200,241,53,0.08); }
+    .btn-secondary:hover { background: rgba(183,232,72,0.1); }
     .deal-form { display: none; margin-top: 20px; }
     .deal-form.show { display: block; }
     .deal-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 16px; }
@@ -1284,6 +1353,14 @@
     return Math.max(min, Math.min(max, value));
   }
 
+  function escapeAttr(value) {
+    return String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
   function resetDealCheck(clearInputs = true) {
     const form = document.getElementById('deal-form');
     const result = document.getElementById('deal-result');
@@ -1609,22 +1686,26 @@
     }
 
     const signalDefs = [
-      { key:'ltft', label:'LTFT', plainName:'Long-Term Fuel Trim', value:f.LTFT_mean, unit:'%', decimals:2, status:getLTFTStatus(f.LTFT_mean,make), explanation:getLTFTExplanation(f.LTFT_mean,make), range:getLTFTRange(make) },
-      { key:'stft', label:'STFT', plainName:'Short-Term Fuel Trim', value:f.STFT_mean, unit:'%', decimals:2, status:getSTFTStatus(f.STFT_mean), explanation:getSTFTExplanation(f.STFT_mean), range:'Normal range: −5% to +5%' },
-      { key:'idle_cv', label:'IDLE CV', plainName:'Idle Stability', value:f.warm_idle_cv, unit:'%', decimals:1, status:getIdleCVStatus(f.warm_idle_cv), explanation:getIdleCVExplanation(f.warm_idle_cv), range:'Healthy: under 10% variation' },
-      { key:'catalyst', label:'CATALYST TEMP', plainName:'Catalytic Converter', value:f.catalyst_temp, unit:'°C', decimals:0, status:getCatalystStatus(f.catalyst_temp), explanation:getCatalystExplanation(f.catalyst_temp), range:'Healthy range: 450°C – 750°C' },
-      { key:'coolant', label:'COOLANT MAX', plainName:'Engine Temperature', value:f.coolant_max, unit:'°C', decimals:0, status:getCoolantStatus(f.coolant_max), explanation:getCoolantExplanation(f.coolant_max), range:'Full operating temp: 85°C+' },
+      { key:'ltft', label:'LTFT', plainName:'Long-Term Fuel Trim', value:f.LTFT_mean, unit:'%', decimals:2, status:getLTFTStatus(f.LTFT_mean,make), explanation:getLTFTExplanation(f.LTFT_mean,make), range:getLTFTRange(make), help:'This is a long-term clue about whether the engine is using fuel normally. If this number is far from normal, the car may be hiding issues like air leaks, fuel problems, or bad sensors.' },
+      { key:'stft', label:'STFT', plainName:'Short-Term Fuel Trim', value:f.STFT_mean, unit:'%', decimals:2, status:getSTFTStatus(f.STFT_mean), explanation:getSTFTExplanation(f.STFT_mean), range:'Normal range: −5% to +5%', help:'This shows quick fuel changes while the engine is running. Small changes are normal. Big swings can mean the engine is having trouble running smoothly.' },
+      { key:'idle_cv', label:'IDLE CV', plainName:'Idle Stability', value:f.warm_idle_cv, unit:'%', decimals:1, status:getIdleCVStatus(f.warm_idle_cv), explanation:getIdleCVExplanation(f.warm_idle_cv), range:'Healthy: under 10% variation', help:'This shows how steady the engine is while sitting still. A healthy engine should idle smoothly. If this number is high, the engine may be shaking, surging, or misfiring.' },
+      { key:'catalyst', label:'CATALYST TEMP', plainName:'Catalytic Converter', value:f.catalyst_temp, unit:'°C', decimals:0, status:getCatalystStatus(f.catalyst_temp), explanation:getCatalystExplanation(f.catalyst_temp), range:'Healthy range: 450°C – 750°C', help:'This shows whether the exhaust system got hot enough during the scan. If it did not, some results may be less reliable.' },
+      { key:'coolant', label:'COOLANT MAX', plainName:'Engine Temperature', value:f.coolant_max, unit:'°C', decimals:0, status:getCoolantStatus(f.coolant_max), explanation:getCoolantExplanation(f.coolant_max), range:'Full operating temp: 85°C+', help:'This shows whether the engine fully warmed up. A scan is more trustworthy when the engine reaches normal temperature.' },
       { key:'pids', label:'PIDS DETECTED', plainName:'Data Coverage', value:f.pids_detected, unit:'', decimals:0,
         status: f.pids_detected >= 8 ? 'good' : f.pids_detected >= 5 ? 'warn' : 'bad',
         explanation: f.pids_detected >= 8 ? 'Good signal coverage. Most key engine parameters were captured successfully.' : f.pids_detected >= 5 ? 'Partial signal coverage. Some PIDs dropped out — score based on available signals only.' : 'Low signal coverage. Several key PIDs were missing. Consider rescanning.',
-        range: 'Recommended: 8 or more' },
+        range: 'Recommended: 8 or more',
+        help:'These are the car data signals ClearTitle was able to read. More signals means the report has more evidence. Fewer signals means the score should be treated with more caution.' },
     ];
 
     const grid = document.getElementById('signals-grid');
     grid.innerHTML = signalDefs.map(sig => `
       <div class="signal-card status-${sig.status}">
         <div class="signal-header">
-          <span class="signal-label">${sig.label}</span>
+          <div class="signal-label-wrap">
+            <span class="signal-label">${sig.label}</span>
+            <button type="button" class="pid-help" aria-label="${escapeAttr(sig.plainName)} explanation" data-tip="${escapeAttr(sig.help)}">?</button>
+          </div>
           <span class="signal-status-dot"></span>
         </div>
         <div class="signal-value">${sig.value !== null && sig.value !== undefined ? Number(sig.value).toFixed(sig.decimals) : '—'}<span class="signal-unit">${sig.unit}</span></div>
