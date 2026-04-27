@@ -32,7 +32,18 @@ with open(os.path.join(MODELS_DIR, 'cleartitle_norm_constants.json')) as f:
 # ── PID detection map ─────────────────────────────────────────────
 PID_MAP = {
     "RPM":          ["Engine RPM (rpm)", "Engine RPM x1000 (rpm)"],
-    "Coolant":      ["Engine coolant temperature (A) (℃)", "Engine coolant temperature (B) (℃)", "Engine coolant temperature (℃)"],
+    "Coolant":      [
+        "Engine coolant temperature (A) (℃)",
+        "Engine coolant temperature (B) (℃)",
+        "Engine coolant temperature (℃)",
+        "Engine coolant temperature (A) (°C)",
+        "Engine coolant temperature (B) (°C)",
+        "Engine coolant temperature (°C)",
+        "Coolant temperature (℃)",
+        "Coolant temperature (°C)",
+        "ECT (℃)",
+        "ECT (°C)",
+    ],
     "Speed":        ["Vehicle speed (km/h)", "Speed (km/h)"],
     "STFT":         ["Short term fuel % trim - Bank 1 (%)"],
     "LTFT":         ["Long term fuel % trim - Bank 1 (%)"],
@@ -40,9 +51,23 @@ PID_MAP = {
     "Throttle":     ["Throttle position (%)", "Absolute throttle position B (%)"],
     "Load":         ["Calculated engine load value (%)"],
     "MAP_pressure": ["Intake manifold absolute pressure (kPa)"],
-    "Timing":       ["Timing advance (°)"],
+    "Timing":       [
+        "Timing advance (°)",
+        "Ignition timing advance (°)",
+        "Timing Advance (°)",
+        "Spark advance (°)",
+    ],
     "O2_eq":        ["Oxygen sensor 1 Wide Range Equivalence ratio ()"],
-    "Catalyst_temp":["Catalyst temperature Bank 1 Sensor 1 (℃)"],
+    "Catalyst_temp":[
+        "Catalyst temperature Bank 1 Sensor 1 (℃)",
+        "Catalyst temperature Bank 1 Sensor 1 (°C)",
+        "Catalyst Temperature Bank 1 (℃)",
+        "Catalyst Temperature Bank 1 (°C)",
+        "CAT temp B1S1 (℃)",
+        "CAT temp B1S1 (°C)",
+        "Catalytic converter temperature (℃)",
+        "Catalytic converter temperature (°C)",
+    ],
 }
 
 def detect_pids(df):
@@ -121,19 +146,20 @@ def score_engine(make, odo, features):
             return medians.get(fallback_key or key, 0)
         return v
 
-    feature_vector = np.array([[
-        ltft_norm,
-        stft_norm,
-        val('warm_idle_cv'),
-        val('warm_idle_rpm_mean'),
-        val('load_mean'),
-        val('timing_mean'),
-        val('catalyst_temp_mean'),
-        val('maf_idle_mean'),
-        val('coolant_max'),
-        odo,
-        make_enc
-    ]])
+    feature_values = {
+        'LTFT_normalized': ltft_norm,
+        'STFT_normalized': stft_norm,
+        'warm_idle_cv': val('warm_idle_cv'),
+        'warm_idle_rpm_mean': val('warm_idle_rpm_mean'),
+        'load_mean': val('load_mean'),
+        'timing_mean': val('timing_mean'),
+        'catalyst_temp_mean': val('catalyst_temp_mean'),
+        'maf_idle_mean': val('maf_idle_mean'),
+        'coolant_max': val('coolant_max'),
+        'odometer_km': odo,
+        'make_encoded': make_enc,
+    }
+    feature_vector = pd.DataFrame([feature_values], columns=constants['features'])
 
     X_scaled = scaler.transform(feature_vector)
     condition_encoded = rf_model.predict(X_scaled)[0]

@@ -1,5 +1,5 @@
-echo flask==3.0.0 > requirements.txt
-echo pandas==2.2.0 >> requirements.txt
-echo numpy==1.26.4 >> requirements.txt
-echo scikit-learn==1.4.0 >> requirements.txt
-echo gunicorn==21.2.0 >> requirements.txt
+flask==3.0.0
+pandas==2.2.3
+numpy==1.26.4
+scikit-learn==1.4.2
+gunicorn==21.2.0
