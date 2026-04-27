@@ -1,8 +1,8 @@
-# ClearTitle
+# EngineIQ
 
 **Engine health scoring for used car buyers.**
 
-ClearTitle analyzes OBD-II time-series data from a Car Scanner CSV export and produces a 0–100 engine health score, condition label (healthy / worn / degraded), and risk tier to help buyers evaluate whether a rebuilt-title low-mileage vehicle justifies its price premium over a clean-title high-mileage alternative.
+EngineIQ analyzes OBD-II time-series data from a Car Scanner CSV export and produces a 0–100 engine health score, condition label (healthy / worn / degraded), and risk tier to help buyers evaluate whether a rebuilt-title low-mileage vehicle justifies its price premium over a clean-title high-mileage alternative.
 
 ## How It Works
 
