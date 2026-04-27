@@ -702,6 +702,42 @@
     .score-breakdown { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
     .score-breakdown-label { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
     .score-breakdown-val { font-family: var(--font-mono); font-size: 13px; color: var(--text); }
+
+    /* Deal check */
+    .deal-section { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 22px 24px; margin: 20px 0; }
+    .deal-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 18px; flex-wrap: wrap; }
+    .deal-title { font-size: 18px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 6px; }
+    .deal-copy { font-family: var(--font-mono); font-size: 12px; color: var(--muted); line-height: 1.6; max-width: 520px; }
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      padding: 11px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+    .btn-secondary:hover { background: rgba(200,241,53,0.08); }
+    .deal-form { display: none; margin-top: 20px; }
+    .deal-form.show { display: block; }
+    .deal-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 16px; }
+    .deal-grid .field.full { grid-column: 1 / -1; }
+    .deal-result { display: none; border-top: 1px solid var(--border); margin-top: 18px; padding-top: 18px; }
+    .deal-result.show { display: block; }
+    .deal-reco { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
+    .deal-reco-label { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; }
+    .deal-target { font-family: var(--font-mono); font-size: 13px; color: var(--accent); }
+    .deal-line { display: flex; justify-content: space-between; gap: 16px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+    .deal-line:last-child { border-bottom: none; }
+    .deal-line span:first-child { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+    .deal-line span:last-child { font-family: var(--font-mono); font-size: 13px; color: var(--text); text-align: right; }
+    .deal-bottom-line { font-family: var(--font-mono); font-size: 13px; color: var(--muted); line-height: 1.6; margin-top: 14px; }
+    @media (max-width: 600px) { .deal-grid { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
@@ -999,6 +1035,50 @@
         Always combine this result with a professional pre-purchase inspection.
       </div>
 
+      <!-- Deal check -->
+      <div class="deal-section" id="deal-section">
+        <div class="deal-header">
+          <div>
+            <div class="deal-title">Want to know if the deal is worth it?</div>
+            <div class="deal-copy">Add the asking price and a clean-title comparison. ClearTitle will estimate a buy, negotiate, or avoid recommendation from the engine report.</div>
+          </div>
+          <button type="button" class="btn-secondary" onclick="showDealForm()">Check Deal</button>
+        </div>
+
+        <div class="deal-form" id="deal-form">
+          <div class="deal-grid">
+            <div class="field">
+              <label>Seller Asking Price</label>
+              <input type="number" id="asking-price" min="0" step="100" placeholder="9500" />
+            </div>
+            <div class="field">
+              <label>Similar Clean-Title Price</label>
+              <input type="number" id="clean-price" min="0" step="100" placeholder="13000" />
+            </div>
+            <div class="field full">
+              <label>Comparison Mileage</label>
+              <select id="mileage-comp">
+                <option value="similar">Similar mileage</option>
+                <option value="lower">Clean-title comparisons are lower mileage</option>
+                <option value="higher">Clean-title comparisons are higher mileage</option>
+                <option value="unknown">Not sure</option>
+              </select>
+            </div>
+          </div>
+          <button type="button" class="btn-submit" onclick="calculateDeal()">Get Deal Recommendation</button>
+          <div class="error-box" id="deal-error-box"></div>
+
+          <div class="deal-result" id="deal-result">
+            <div class="deal-reco">
+              <div class="deal-reco-label" id="deal-reco-label">--</div>
+              <div class="deal-target" id="deal-target">--</div>
+            </div>
+            <div id="deal-lines"></div>
+            <div class="deal-bottom-line" id="deal-bottom-line"></div>
+          </div>
+        </div>
+      </div>
+
       <button class="btn-reset" onclick="resetForm()">← Scan another vehicle</button>
     </div>
   </div>
@@ -1014,6 +1094,8 @@
   const fileInput = document.getElementById('csv-file');
   const fileName  = document.getElementById('file-name');
   const uploadZone = document.getElementById('upload-zone');
+  let currentVehicle = null;
+  let currentEngineScore = null;
 
   fileInput.addEventListener('change', () => {
     if (fileInput.files[0]) fileName.textContent = '✓ ' + fileInput.files[0].name;
@@ -1194,6 +1276,130 @@
     return { flags, totalPenalty, scoreCap, adjustedScore, lien };
   }
 
+  function formatMoney(value) {
+    return '$' + Math.round(value).toLocaleString();
+  }
+
+  function clampValue(value, min, max) {
+    return Math.max(min, Math.min(max, value));
+  }
+
+  function resetDealCheck(clearInputs = true) {
+    const form = document.getElementById('deal-form');
+    const result = document.getElementById('deal-result');
+    const error = document.getElementById('deal-error-box');
+    if (form) form.classList.remove('show');
+    if (result) result.classList.remove('show');
+    if (error) error.classList.remove('show');
+    if (clearInputs) {
+      document.getElementById('asking-price').value = '';
+      document.getElementById('clean-price').value = '';
+      document.getElementById('mileage-comp').value = 'similar';
+    }
+  }
+
+  function showDealForm() {
+    document.getElementById('deal-form').classList.add('show');
+    document.getElementById('deal-error-box').classList.remove('show');
+  }
+
+  function getEngineRiskReserve(score, baseline) {
+    if (score >= 85) return clampValue(baseline * 0.02, 250, 800);
+    if (score >= 75) return clampValue(baseline * 0.04, 500, 1200);
+    if (score >= 60) return clampValue(baseline * 0.08, 900, 2200);
+    if (score >= 50) return clampValue(baseline * 0.12, 1400, 3200);
+    return clampValue(baseline * 0.20, 2500, 6500);
+  }
+
+  function calculateDeal() {
+    const error = document.getElementById('deal-error-box');
+    error.classList.remove('show');
+
+    if (!currentVehicle || currentEngineScore === null) {
+      error.textContent = 'Run an engine report before checking deal value.';
+      error.classList.add('show');
+      return;
+    }
+
+    const asking = Number(document.getElementById('asking-price').value);
+    const cleanPrice = Number(document.getElementById('clean-price').value);
+    const mileageComp = document.getElementById('mileage-comp').value;
+
+    if (!asking || asking <= 0 || !cleanPrice || cleanPrice <= 0) {
+      error.textContent = 'Enter both prices before calculating.';
+      error.classList.add('show');
+      return;
+    }
+
+    const mileageAdjustments = {
+      similar: { rate: 0, label: 'Similar mileage' },
+      lower: { rate: -0.08, label: 'Comparisons are lower mileage' },
+      higher: { rate: 0.06, label: 'Comparisons are higher mileage' },
+      unknown: { rate: 0, label: 'Mileage not adjusted' },
+    };
+    const mileage = mileageAdjustments[mileageComp] || mileageAdjustments.similar;
+    const mileageAdjusted = cleanPrice * (1 + mileage.rate);
+    const titleDiscount = currentVehicle.title === 'rebuilt' ? 0.32 : 0;
+    const titleAdjusted = mileageAdjusted * (1 - titleDiscount);
+    const riskReserve = getEngineRiskReserve(currentEngineScore, titleAdjusted);
+    const suggestedMax = Math.max(0, titleAdjusted - riskReserve);
+    const targetLow = suggestedMax * 0.92;
+    const targetHigh = suggestedMax;
+    const ratio = asking / Math.max(suggestedMax, 1);
+
+    let recommendation;
+    let color;
+    let bottomLine;
+    if (currentEngineScore < 50 && ratio > 0.9) {
+      recommendation = 'Avoid';
+      color = 'var(--danger)';
+      bottomLine = 'The engine risk is high and the asking price does not leave enough repair margin.';
+    } else if (ratio <= 0.95) {
+      recommendation = currentEngineScore < 50 ? 'Only at Deep Discount' : 'Good Value';
+      color = 'var(--safe)';
+      bottomLine = 'The asking price is below the risk-adjusted target range.';
+    } else if (ratio <= 1.08) {
+      recommendation = 'Fair';
+      color = 'var(--accent)';
+      bottomLine = 'The asking price is close to the risk-adjusted value. Keep inspection results in mind.';
+    } else if (ratio <= 1.22) {
+      recommendation = 'Negotiate';
+      color = 'var(--warn)';
+      bottomLine = 'The asking price is above the risk-adjusted target. Negotiate before moving forward.';
+    } else {
+      recommendation = 'Avoid / Negotiate Hard';
+      color = 'var(--danger)';
+      bottomLine = 'The seller is asking too much relative to title status and engine risk.';
+    }
+
+    const titleText = currentVehicle.title === 'rebuilt'
+      ? `Rebuilt title discount (${Math.round(titleDiscount * 100)}%)`
+      : 'Clean title adjustment';
+    const titleValue = currentVehicle.title === 'rebuilt'
+      ? '-' + formatMoney(mileageAdjusted * titleDiscount)
+      : '$0';
+
+    document.getElementById('deal-reco-label').textContent = recommendation;
+    document.getElementById('deal-reco-label').style.color = color;
+    document.getElementById('deal-target').textContent = `Target: ${formatMoney(targetLow)}-${formatMoney(targetHigh)}`;
+    document.getElementById('deal-lines').innerHTML = [
+      ['Seller asking', formatMoney(asking)],
+      ['Clean-title comparison', formatMoney(cleanPrice)],
+      [mileage.label, `${mileage.rate >= 0 ? '+' : ''}${Math.round(mileage.rate * 100)}%`],
+      [titleText, titleValue],
+      ['Engine risk reserve', '-' + formatMoney(riskReserve)],
+      ['Suggested max price', formatMoney(suggestedMax)],
+      ['Asking vs suggested max', `${asking >= suggestedMax ? '+' : '-'}${formatMoney(Math.abs(asking - suggestedMax))}`],
+    ].map(([label, value]) => `
+      <div class="deal-line">
+        <span>${label}</span>
+        <span>${value}</span>
+      </div>
+    `).join('');
+    document.getElementById('deal-bottom-line').textContent = bottomLine;
+    document.getElementById('deal-result').classList.add('show');
+  }
+
   // ── Submit everything ────────────────────────────────────────────
   async function submitAll() {
     const qError = document.getElementById('q-error-box');
@@ -1256,6 +1462,9 @@
 
     // Score ring — use adjusted score
     const score = adjustedScore;
+    currentVehicle = v;
+    currentEngineScore = score;
+    resetDealCheck(true);
     const circumference = 289;
     const offset = circumference - (score / 100) * circumference;
     const ring = document.getElementById('score-ring');
@@ -1438,6 +1647,9 @@
     document.getElementById('error-box').classList.remove('show');
     document.getElementById('q-error-box').classList.remove('show');
     document.querySelectorAll('.q-option').forEach(o => o.classList.remove('selected'));
+    currentVehicle = null;
+    currentEngineScore = null;
+    resetDealCheck(true);
     window.scrollTo(0, 0);
   }
 </script>
