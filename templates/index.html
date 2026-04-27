@@ -533,7 +533,6 @@
       align-items: center;
       gap: 7px;
       min-width: 0;
-      position: relative;
     }
 
     .pid-help {
@@ -548,7 +547,6 @@
       font-size: 11px;
       line-height: 16px;
       padding: 0;
-      position: relative;
       text-align: center;
       flex-shrink: 0;
     }
@@ -564,11 +562,12 @@
     .pid-help::after {
       content: attr(data-tip);
       position: absolute;
-      top: calc(100% + 10px);
-      left: 50%;
-      transform: translateX(-50%) translateY(4px);
+      top: 42px;
+      left: 18px;
+      transform: translateY(4px);
       width: 260px;
-      max-width: min(260px, 72vw);
+      max-width: calc(100% - 36px);
+      box-sizing: border-box;
       background: #111720;
       border: 1px solid var(--border);
       border-radius: 8px;
@@ -593,7 +592,19 @@
     .pid-help:focus::after {
       opacity: 1;
       visibility: visible;
-      transform: translateX(-50%) translateY(0);
+      transform: translateY(0);
+    }
+
+    .signal-card:nth-child(even) .pid-help::after {
+      left: auto;
+      right: 18px;
+    }
+
+    @media (max-width: 600px) {
+      .signal-card:nth-child(even) .pid-help::after {
+        left: 18px;
+        right: auto;
+      }
     }
 
     .signal-status-dot {
