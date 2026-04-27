@@ -646,6 +646,62 @@
       color: var(--muted);
       letter-spacing: 0.05em;
     }
+
+    /* ── Step indicator ── */
+    .step-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 28px;
+    }
+    .step-dot {
+      width: 28px; height: 28px; border-radius: 50%;
+      border: 2px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-mono); font-size: 11px;
+      color: var(--muted); transition: all 0.3s; flex-shrink: 0;
+    }
+    .step-dot.active { border-color: var(--accent); color: var(--accent); background: rgba(200,241,53,0.08); }
+    .step-dot.done { border-color: var(--safe); background: rgba(61,245,160,0.1); color: var(--safe); }
+    .step-line { flex: 1; height: 1px; background: var(--border); }
+    .step-label { font-family: var(--font-mono); font-size: 10px; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+
+    /* ── Questionnaire ── */
+    #questionnaire-card { display: none; }
+    #questionnaire-card.show { display: block; }
+    .q-item { margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid var(--border); }
+    .q-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+    .q-number { font-family: var(--font-mono); font-size: 10px; color: var(--accent); letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 6px; }
+    .q-text { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 14px; line-height: 1.4; }
+    .q-options { display: flex; flex-direction: column; gap: 8px; }
+    .q-option {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 14px; border: 1px solid var(--border);
+      border-radius: 6px; cursor: pointer; transition: all 0.15s; background: var(--bg);
+    }
+    .q-option:hover { border-color: var(--muted); }
+    .q-option.selected { border-color: var(--accent); background: rgba(200,241,53,0.06); }
+    .q-option input[type="radio"] { width: 16px; height: 16px; accent-color: var(--accent); flex-shrink: 0; cursor: pointer; padding: 0; border: none; }
+    .q-option-text { font-family: var(--font-mono); font-size: 13px; color: var(--text); line-height: 1.4; }
+
+    /* ── Lien flag ── */
+    .lien-flag { display: none; background: rgba(255,184,48,0.08); border: 1px solid rgba(255,184,48,0.25); border-radius: 8px; padding: 14px 18px; margin-bottom: 20px; font-family: var(--font-mono); font-size: 13px; color: var(--warn); line-height: 1.6; }
+    .lien-flag.show { display: block; }
+
+    /* ── Penalty breakdown ── */
+    .penalty-section { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 20px 24px; margin-bottom: 20px; }
+    .penalty-title { font-family: var(--font-mono); font-size: 12px; color: var(--accent); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 16px; }
+    .penalty-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+    .penalty-row:last-child { border-bottom: none; }
+    .penalty-row-left { flex: 1; }
+    .penalty-flag-name { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
+    .penalty-flag-desc { font-family: var(--font-mono); font-size: 11px; color: var(--muted); line-height: 1.5; }
+    .penalty-value { font-family: var(--font-mono); font-size: 14px; font-weight: 600; flex-shrink: 0; }
+    .penalty-value.negative { color: var(--danger); }
+    .penalty-value.zero { color: var(--muted); }
+    .score-breakdown { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
+    .score-breakdown-label { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+    .score-breakdown-val { font-family: var(--font-mono); font-size: 13px; color: var(--text); }
   </style>
 </head>
 <body>
@@ -663,7 +719,13 @@
 
   <!-- Form card -->
   <div class="card" id="form-card">
-    <p class="card-title">// Vehicle Information</p>
+    <!-- Step indicator -->
+    <div class="step-indicator">
+      <div class="step-dot active" id="step1-dot">1</div>
+      <div class="step-line"></div>
+      <div class="step-dot" id="step2-dot">2</div>
+    </div>
+    <p class="card-title" id="form-card-title">// Step 1 — Vehicle Information</p>
 
     <form id="scan-form">
       <div class="form-grid">
@@ -710,12 +772,131 @@
         </div>
       </div>
 
-      <button type="submit" class="btn-submit" id="submit-btn">
-        Analyze Engine Health →
+      <button type="button" class="btn-submit" id="next-btn" onclick="goToQuestionnaire()">
+        Next — Answer Questions →
       </button>
 
       <div class="error-box" id="error-box"></div>
     </form>
+  </div>
+
+  <!-- Questionnaire card -->
+  <div class="card" id="questionnaire-card">
+    <div class="step-indicator">
+      <div class="step-dot done">✓</div>
+      <div class="step-line"></div>
+      <div class="step-dot active">2</div>
+    </div>
+    <p class="card-title">// Step 2 — Visual Inspection</p>
+
+    <div class="q-item">
+      <div class="q-number">Q1</div>
+      <div class="q-text">Were any warning lights on when you started the car?</div>
+      <div class="q-options" id="q1">
+        <label class="q-option"><input type="radio" name="q1" value="none"> <span class="q-option-text">No warning lights</span></label>
+        <label class="q-option"><input type="radio" name="q1" value="non_engine"> <span class="q-option-text">Yes — non-engine light (ABS, airbag, TPMS)</span></label>
+        <label class="q-option"><input type="radio" name="q1" value="amber_cel"> <span class="q-option-text">Yes — check engine light (amber)</span></label>
+        <label class="q-option"><input type="radio" name="q1" value="flashing_red"> <span class="q-option-text">Yes — flashing check engine or red warning light</span></label>
+      </div>
+    </div>
+
+    <div class="q-item">
+      <div class="q-number">Q2</div>
+      <div class="q-text">What was the engine state when you arrived?</div>
+      <div class="q-options" id="q2">
+        <label class="q-option"><input type="radio" name="q2" value="unknown"> <span class="q-option-text">No / Don't know</span></label>
+        <label class="q-option"><input type="radio" name="q2" value="cold"> <span class="q-option-text">Cold (not recently driven)</span></label>
+        <label class="q-option"><input type="radio" name="q2" value="warm_cooperative"> <span class="q-option-text">Warm but seller allowed a cold start</span></label>
+        <label class="q-option"><input type="radio" name="q2" value="already_running"> <span class="q-option-text">Already running when I arrived</span></label>
+      </div>
+    </div>
+
+    <div class="q-item">
+      <div class="q-number">Q3</div>
+      <div class="q-text">Has the battery been disconnected or ECU reset recently?</div>
+      <div class="q-options" id="q3">
+        <label class="q-option"><input type="radio" name="q3" value="no"> <span class="q-option-text">No / Don't know</span></label>
+        <label class="q-option"><input type="radio" name="q3" value="reset_monitors_ready"> <span class="q-option-text">Yes, but all readiness monitors are complete</span></label>
+        <label class="q-option"><input type="radio" name="q3" value="reset_monitors_incomplete"> <span class="q-option-text">Yes, and some monitors are incomplete</span></label>
+      </div>
+    </div>
+
+    <div class="q-item">
+      <div class="q-number">Q4</div>
+      <div class="q-text">Did the seller disclose any mechanical issues?</div>
+      <div class="q-options" id="q4">
+        <label class="q-option"><input type="radio" name="q4" value="none"> <span class="q-option-text">No issues disclosed</span></label>
+        <label class="q-option"><input type="radio" name="q4" value="non_engine"> <span class="q-option-text">Yes — non-engine issue (brakes, tires, body)</span></label>
+        <label class="q-option"><input type="radio" name="q4" value="minor_engine"> <span class="q-option-text">Yes — minor engine-related issue</span></label>
+        <label class="q-option"><input type="radio" name="q4" value="major_engine"> <span class="q-option-text">Yes — major engine issue (overheating, knocking, oil pressure)</span></label>
+      </div>
+    </div>
+
+    <div class="q-item">
+      <div class="q-number">Q5</div>
+      <div class="q-text">Does the CarFax or vehicle history show any accidents?</div>
+      <div class="q-options" id="q5">
+        <label class="q-option"><input type="radio" name="q5" value="none"> <span class="q-option-text">No accidents / No report available</span></label>
+        <label class="q-option"><input type="radio" name="q5" value="body_only"> <span class="q-option-text">Yes — body damage only, no drivetrain involvement confirmed</span></label>
+        <label class="q-option"><input type="radio" name="q5" value="underhood_unknown"> <span class="q-option-text">Yes — underhood, front-end, or damage location unknown</span></label>
+      </div>
+    </div>
+
+    <div class="q-item">
+      <div class="q-number">Q6</div>
+      <div class="q-text">Any odometer discrepancy on the vehicle history report?</div>
+      <div class="q-options" id="q6">
+        <label class="q-option"><input type="radio" name="q6" value="none"> <span class="q-option-text">No discrepancy</span></label>
+        <label class="q-option"><input type="radio" name="q6" value="minor"> <span class="q-option-text">Minor discrepancy (likely clerical)</span></label>
+        <label class="q-option"><input type="radio" name="q6" value="unresolved"> <span class="q-option-text">Unresolved discrepancy or possible rollback</span></label>
+      </div>
+    </div>
+
+    <div class="q-item">
+      <div class="q-number">Q7</div>
+      <div class="q-text">Does the vehicle history show an active lien?</div>
+      <div class="q-options" id="q7">
+        <label class="q-option"><input type="radio" name="q7" value="no"> <span class="q-option-text">No</span></label>
+        <label class="q-option"><input type="radio" name="q7" value="yes"> <span class="q-option-text">Yes — active lien on vehicle</span></label>
+      </div>
+    </div>
+
+    <div class="q-item">
+      <div class="q-number">Q8</div>
+      <div class="q-text">How overdue is the oil change?</div>
+      <div class="q-options" id="q8">
+        <label class="q-option"><input type="radio" name="q8" value="fine"> <span class="q-option-text">Not overdue / Unknown but looks clean</span></label>
+        <label class="q-option"><input type="radio" name="q8" value="slightly"> <span class="q-option-text">Slightly overdue</span></label>
+        <label class="q-option"><input type="radio" name="q8" value="significantly"> <span class="q-option-text">Significantly overdue or oil looks very dirty</span></label>
+      </div>
+    </div>
+
+    <div class="q-item">
+      <div class="q-number">Q9</div>
+      <div class="q-text">How many previous owners does the vehicle have?</div>
+      <div class="q-options" id="q9">
+        <label class="q-option"><input type="radio" name="q9" value="one_two"> <span class="q-option-text">1 or 2 owners</span></label>
+        <label class="q-option"><input type="radio" name="q9" value="three_plus_good"> <span class="q-option-text">3 or more — good service records</span></label>
+        <label class="q-option"><input type="radio" name="q9" value="three_plus_poor"> <span class="q-option-text">3 or more — missing or sparse records</span></label>
+      </div>
+    </div>
+
+    <div class="q-item">
+      <div class="q-number">Q10</div>
+      <div class="q-text">If you observed the cold start, how did it behave?</div>
+      <div class="q-options" id="q10">
+        <label class="q-option"><input type="radio" name="q10" value="normal"> <span class="q-option-text">Normal start, smooth idle</span></label>
+        <label class="q-option"><input type="radio" name="q10" value="slightly_rough"> <span class="q-option-text">Slightly rough or extended start</span></label>
+        <label class="q-option"><input type="radio" name="q10" value="very_rough"> <span class="q-option-text">Rough, repeated cranking, smoke, stalling, or knocking</span></label>
+        <label class="q-option"><input type="radio" name="q10" value="not_observed"> <span class="q-option-text">Did not observe cold start</span></label>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:12px; margin-top:8px;">
+      <button type="button" class="btn-reset" onclick="backToForm()">← Back</button>
+      <button type="button" class="btn-submit" style="flex:1;" onclick="submitAll()">Analyze Engine Health →</button>
+    </div>
+    <div class="error-box" id="q-error-box"></div>
   </div>
 
   <!-- Loading -->
@@ -785,6 +966,29 @@
         </div>
       </div>
 
+      <!-- Lien flag -->
+      <div class="lien-flag" id="lien-flag">
+        ⚠️ <strong>Purchase Risk:</strong> An active lien was reported on this vehicle. This does not affect the engine health score, but means the seller may still owe money on the car. Purchasing a vehicle with an active lien can result in the lender repossessing it. Verify lien status through a title search or your provincial registry before purchasing.
+      </div>
+
+      <!-- Penalty breakdown -->
+      <div class="penalty-section" id="penalty-section" style="display:none;">
+        <div class="penalty-title">// Score Adjustments — Visual Inspection</div>
+        <div id="penalty-rows"></div>
+        <div class="score-breakdown">
+          <span class="score-breakdown-label">Base engine score (OBD-II only)</span>
+          <span class="score-breakdown-val" id="base-score-display">—</span>
+        </div>
+        <div class="score-breakdown">
+          <span class="score-breakdown-label">Total penalty applied</span>
+          <span class="score-breakdown-val" id="total-penalty-display" style="color:var(--danger);">—</span>
+        </div>
+        <div class="score-breakdown">
+          <span class="score-breakdown-label" style="color:var(--text); font-weight:600;">Final adjusted score</span>
+          <span class="score-breakdown-val" id="final-score-display" style="color:var(--accent); font-weight:700;">—</span>
+        </div>
+      </div>
+
       <!-- Signal summary -->
       <div class="signals-grid" id="signals-grid"></div>
 
@@ -806,15 +1010,13 @@
 </div>
 
 <script>
-  // File upload display
+  // ── File upload display ──────────────────────────────────────────
   const fileInput = document.getElementById('csv-file');
   const fileName  = document.getElementById('file-name');
   const uploadZone = document.getElementById('upload-zone');
 
   fileInput.addEventListener('change', () => {
-    if (fileInput.files[0]) {
-      fileName.textContent = '✓ ' + fileInput.files[0].name;
-    }
+    if (fileInput.files[0]) fileName.textContent = '✓ ' + fileInput.files[0].name;
   });
 
   uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('dragover'); });
@@ -831,52 +1033,218 @@
     }
   });
 
-  // Form submit
-  document.getElementById('scan-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
+  // Highlight selected radio options
+  document.addEventListener('change', e => {
+    if (e.target.type === 'radio') {
+      const group = e.target.closest('.q-options');
+      if (group) {
+        group.querySelectorAll('.q-option').forEach(o => o.classList.remove('selected'));
+        e.target.closest('.q-option').classList.add('selected');
+      }
+    }
+  });
 
+  // ── Step 1 → Step 2 ─────────────────────────────────────────────
+  function goToQuestionnaire() {
     const errorBox = document.getElementById('error-box');
     errorBox.classList.remove('show');
 
+    const make = document.getElementById('make').value;
+    const model = document.getElementById('model').value;
+    const year = document.getElementById('year').value;
+    const odo = document.getElementById('odometer').value;
+
+    if (!make || !model || !year || !odo) {
+      errorBox.textContent = 'Please fill in all vehicle details.';
+      errorBox.classList.add('show');
+      return;
+    }
     if (!fileInput.files[0]) {
       errorBox.textContent = 'Please upload a CSV file from your OBD-II scanner.';
       errorBox.classList.add('show');
       return;
     }
 
-    // Show loading
     document.getElementById('form-card').style.display = 'none';
+    document.getElementById('questionnaire-card').classList.add('show');
+    window.scrollTo(0, 0);
+  }
+
+  function backToForm() {
+    document.getElementById('questionnaire-card').classList.remove('show');
+    document.getElementById('form-card').style.display = 'block';
+    window.scrollTo(0, 0);
+  }
+
+  // ── Penalty engine ───────────────────────────────────────────────
+  function getAnswers() {
+    const ans = {};
+    for (let i = 1; i <= 10; i++) {
+      const sel = document.querySelector(`input[name="q${i}"]:checked`);
+      ans[`q${i}`] = sel ? sel.value : null;
+    }
+    return ans;
+  }
+
+  function calculatePenalties(answers, baseScore) {
+    const flags = [];
+    let totalPenalty = 0;
+    let scoreCap = 100;
+    let lien = false;
+
+    // Q1 — Warning lights
+    const q1Map = {
+      'none':        { penalty: 0,   cap: 100, name: 'Warning Lights', desc: 'No warning lights detected.' },
+      'non_engine':  { penalty: 0,   cap: 100, name: 'Warning Lights', desc: 'Non-engine warning light present (ABS/airbag/TPMS). No engine health impact.' },
+      'amber_cel':   { penalty: -8,  cap: 70,  name: 'Check Engine Light', desc: 'Active amber check engine light. May indicate an unresolved engine fault code.' },
+      'flashing_red':{ penalty: -18, cap: 55,  name: 'Flashing / Red Warning', desc: 'Flashing or red engine warning. Indicates a serious active fault — high risk.' },
+    };
+    if (answers.q1 && answers.q1 !== 'none' && answers.q1 !== 'non_engine') {
+      const r = q1Map[answers.q1];
+      if (r) { flags.push(r); totalPenalty += r.penalty; scoreCap = Math.min(scoreCap, r.cap); }
+    }
+
+    // Q2 — Engine state on arrival
+    const q2Map = {
+      'unknown':          { penalty: 0,  cap: 100, name: 'Engine State Unknown', desc: 'Engine state on arrival not observed. No adjustment applied.' },
+      'cold':             { penalty: 0,  cap: 100, name: 'Cold Engine', desc: 'Engine was cold — ideal for a complete scan.' },
+      'warm_cooperative': { penalty: -3, cap: 100, name: 'Engine Pre-Warmed', desc: 'Engine was warm but seller cooperated. Minor data quality penalty — cold start behavior not captured.' },
+      'already_running':  { penalty: -5, cap: 100, name: 'Engine Already Running', desc: 'Engine was running on arrival. Cold start issues could not be observed — a known concealment tactic.' },
+    };
+    if (answers.q2 && !['unknown','cold'].includes(answers.q2)) {
+      const r = q2Map[answers.q2];
+      if (r) { flags.push(r); totalPenalty += r.penalty; scoreCap = Math.min(scoreCap, r.cap); }
+    }
+
+    // Q3 — Battery / ECU reset
+    const q3Map = {
+      'no':                       null,
+      'reset_monitors_ready':     { penalty: -4,  cap: 80,  name: 'Recent ECU Reset', desc: 'Battery or ECU reset confirmed. Readiness monitors complete — moderate data reliability penalty.' },
+      'reset_monitors_incomplete':{ penalty: -10, cap: 75,  name: 'ECU Reset — Monitors Incomplete', desc: 'ECU reset with incomplete readiness monitors. OBD-II data may not reflect true engine state.' },
+    };
+    const q3 = q3Map[answers.q3];
+    if (q3) { flags.push(q3); totalPenalty += q3.penalty; scoreCap = Math.min(scoreCap, q3.cap); }
+
+    // Q4 — Known mechanical issues
+    const q4Map = {
+      'none':        null,
+      'non_engine':  { penalty: 0,   cap: 100, name: 'Non-Engine Issue Disclosed', desc: 'Seller disclosed a non-engine issue. No engine health impact.' },
+      'minor_engine':{ penalty: -6,  cap: 100, name: 'Minor Engine Issue Disclosed', desc: 'Seller disclosed a minor engine-related issue. Modest penalty applied.' },
+      'major_engine':{ penalty: -25, cap: 50,  name: 'Major Engine Issue Disclosed', desc: 'Seller disclosed a serious engine issue (overheating, knocking, oil pressure). Significant risk.' },
+    };
+    const q4 = q4Map[answers.q4];
+    if (q4 && answers.q4 !== 'none' && answers.q4 !== 'non_engine') {
+      flags.push(q4); totalPenalty += q4.penalty; scoreCap = Math.min(scoreCap, q4.cap);
+    }
+
+    // Q5 — Accident history
+    const q5Map = {
+      'none':             null,
+      'body_only':        { penalty: -2,  cap: 100, name: 'Accident — Body Only', desc: 'Accident recorded but confirmed body damage only. Minimal engine health impact.' },
+      'underhood_unknown':{ penalty: -8,  cap: 75,  name: 'Accident — Underhood or Unknown', desc: 'Accident with underhood, front-end, or unknown damage location. Could affect engine components.' },
+    };
+    const q5 = q5Map[answers.q5];
+    if (q5) { flags.push(q5); totalPenalty += q5.penalty; scoreCap = Math.min(scoreCap, q5.cap); }
+
+    // Q6 — Odometer
+    const q6Map = {
+      'none':      null,
+      'minor':     { penalty: -5,  cap: 100, name: 'Minor Odometer Discrepancy', desc: 'Small odometer discrepancy on record — likely clerical. Small uncertainty penalty.' },
+      'unresolved':{ penalty: -18, cap: 65,  name: 'Odometer Discrepancy / Rollback', desc: 'Unresolved odometer discrepancy or possible rollback. Mileage-based wear assumptions are unreliable.' },
+    };
+    const q6 = q6Map[answers.q6];
+    if (q6) { flags.push(q6); totalPenalty += q6.penalty; scoreCap = Math.min(scoreCap, q6.cap); }
+
+    // Q7 — Lien (purchase risk flag only, no engine penalty)
+    if (answers.q7 === 'yes') lien = true;
+
+    // Q8 — Oil change
+    const q8Map = {
+      'fine':         null,
+      'slightly':     { penalty: -4,  cap: 100, name: 'Oil Change Slightly Overdue', desc: 'Oil change is slightly overdue. Minor lubrication concern.' },
+      'significantly':{ penalty: -10, cap: 70,  name: 'Oil Change Significantly Overdue', desc: 'Oil significantly overdue or very dirty. Increased risk of sludge, bearing wear, or VVT issues.' },
+    };
+    const q8 = q8Map[answers.q8];
+    if (q8) { flags.push(q8); totalPenalty += q8.penalty; scoreCap = Math.min(scoreCap, q8.cap); }
+
+    // Q9 — Previous owners
+    const q9Map = {
+      'one_two':        null,
+      'three_plus_good':{ penalty: -2, cap: 100, name: 'Multiple Owners', desc: '3+ owners with good records. Minor uncertainty penalty.' },
+      'three_plus_poor':{ penalty: -5, cap: 100, name: 'Multiple Owners — Sparse Records', desc: '3+ owners with missing records. Maintenance history is unclear.' },
+    };
+    const q9 = q9Map[answers.q9];
+    if (q9) { flags.push(q9); totalPenalty += q9.penalty; scoreCap = Math.min(scoreCap, q9.cap); }
+
+    // Q10 — Cold start
+    const q10Map = {
+      'normal':        null,
+      'not_observed':  null,
+      'slightly_rough':{ penalty: -6,  cap: 100, name: 'Slightly Rough Cold Start', desc: 'Slightly rough or extended cold start observed. Could indicate minor fuel delivery or ignition issue.' },
+      'very_rough':    { penalty: -20, cap: 60,  name: 'Severe Cold Start Issue', desc: 'Rough start with repeated cranking, smoke, stalling, or knocking. Strong indicator of mechanical issues.' },
+    };
+    const q10 = q10Map[answers.q10];
+    if (q10) { flags.push(q10); totalPenalty += q10.penalty; scoreCap = Math.min(scoreCap, q10.cap); }
+
+    // Apply adjustments
+    let adjustedScore = baseScore + totalPenalty;
+    adjustedScore = Math.min(adjustedScore, scoreCap);
+    adjustedScore = Math.max(0, Math.min(100, adjustedScore));
+
+    return { flags, totalPenalty, scoreCap, adjustedScore, lien };
+  }
+
+  // ── Submit everything ────────────────────────────────────────────
+  async function submitAll() {
+    const qError = document.getElementById('q-error-box');
+    qError.classList.remove('show');
+
+    // Check all questions answered
+    const answers = getAnswers();
+    const unanswered = Object.entries(answers).filter(([k,v]) => v === null);
+    if (unanswered.length > 0) {
+      qError.textContent = `Please answer all questions before submitting (${unanswered.length} remaining).`;
+      qError.classList.add('show');
+      return;
+    }
+
+    document.getElementById('questionnaire-card').classList.remove('show');
     document.getElementById('loading').classList.add('show');
     document.getElementById('results').classList.remove('show');
+    window.scrollTo(0, 0);
 
     try {
-      const formData = new FormData(e.target);
+      const formData = new FormData(document.getElementById('scan-form'));
       const res = await fetch('/analyze', { method: 'POST', body: formData });
       const data = await res.json();
 
       document.getElementById('loading').classList.remove('show');
 
       if (data.error) {
-        document.getElementById('form-card').style.display = 'block';
-        errorBox.textContent = data.error;
-        errorBox.classList.add('show');
+        document.getElementById('questionnaire-card').classList.add('show');
+        qError.textContent = data.error;
+        qError.classList.add('show');
         return;
       }
 
-      renderResults(data);
+      renderResults(data, answers);
 
     } catch (err) {
       document.getElementById('loading').classList.remove('show');
-      document.getElementById('form-card').style.display = 'block';
-      errorBox.textContent = 'Something went wrong. Please try again.';
-      errorBox.classList.add('show');
+      document.getElementById('questionnaire-card').classList.add('show');
+      qError.textContent = 'Something went wrong. Please try again.';
+      qError.classList.add('show');
     }
-  });
+  }
 
-  function renderResults(data) {
+  // ── Render results ───────────────────────────────────────────────
+  function renderResults(data, answers) {
     const v = data.vehicle;
     const s = data.score;
     const f = data.features;
+
+    const baseScore = s.health_score;
+    const { flags, totalPenalty, scoreCap, adjustedScore, lien } = calculatePenalties(answers || {}, baseScore);
 
     // Vehicle info
     document.getElementById('res-vehicle').textContent = `${v.year} ${v.make} ${v.model}`;
@@ -886,49 +1254,43 @@
     badge.textContent = v.title === 'rebuilt' ? 'Rebuilt Title' : 'Clean Title';
     badge.className = 'title-badge ' + v.title;
 
-    // Score ring
-    const score = s.health_score;
+    // Score ring — use adjusted score
+    const score = adjustedScore;
     const circumference = 289;
     const offset = circumference - (score / 100) * circumference;
     const ring = document.getElementById('score-ring');
-
     let ringColor = score >= 75 ? '#3df5a0' : score >= 50 ? '#ffb830' : '#ff4d6d';
     ring.style.stroke = ringColor;
     setTimeout(() => { ring.style.strokeDashoffset = offset; }, 100);
-
     document.getElementById('res-score').textContent = score.toFixed(0);
     document.getElementById('res-score').style.color = ringColor;
 
-    // Condition
-    const conditionMap = {
-      'healthy':  'Engine Healthy',
-      'worn':     'Engine Worn',
-      'degraded': 'Engine Degraded'
-    };
-    document.getElementById('res-condition').textContent = conditionMap[s.condition] || s.condition;
-
-    // Risk
-    let riskText, riskClass, note;
+    // Condition label based on adjusted score
+    let condition, riskText, riskClass, note;
     if (score >= 75) {
+      condition = 'Engine Healthy';
       riskText = '🟢 LOW RISK';
       riskClass = 'risk-low';
-      note = 'Engine signals are within normal range for this make and mileage. No significant anomalies detected.';
+      note = 'Engine signals and inspection conditions are within normal range. No significant anomalies detected.';
     } else if (score >= 50) {
+      condition = 'Engine Worn';
       riskText = '🟡 MODERATE RISK';
       riskClass = 'risk-medium';
-      note = 'Engine shows signs of wear consistent with age and mileage. A pre-purchase inspection is recommended.';
+      note = 'Engine shows signs of wear or concerning inspection conditions. A pre-purchase mechanical inspection is recommended.';
     } else {
+      condition = 'Engine Degraded';
       riskText = '🔴 HIGH RISK';
       riskClass = 'risk-high';
-      note = 'Engine signals indicate significant anomalies. Full mechanical inspection strongly recommended before purchase.';
+      note = 'Significant engine anomalies or serious inspection flags detected. Full mechanical inspection strongly recommended before purchase.';
     }
 
+    document.getElementById('res-condition').textContent = condition;
     const riskEl = document.getElementById('res-risk');
     riskEl.textContent = riskText;
     riskEl.className = 'risk-label ' + riskClass;
     document.getElementById('res-note').textContent = note;
 
-    // Probability bars
+    // Probability bars (base model probabilities)
     const probs = s.probabilities;
     setTimeout(() => {
       document.getElementById('bar-healthy').style.width  = (probs.healthy  || 0) + '%';
@@ -939,160 +1301,114 @@
       document.getElementById('val-degraded').textContent = (probs.degraded || 0).toFixed(1) + '%';
     }, 200);
 
+    // Lien flag
+    const lienEl = document.getElementById('lien-flag');
+    if (lien) lienEl.classList.add('show');
+    else lienEl.classList.remove('show');
+
+    // Penalty breakdown
+    const penaltySection = document.getElementById('penalty-section');
+    if (flags.length > 0 || totalPenalty < 0) {
+      penaltySection.style.display = 'block';
+      const rows = document.getElementById('penalty-rows');
+      rows.innerHTML = flags.map(fl => `
+        <div class="penalty-row">
+          <div class="penalty-row-left">
+            <div class="penalty-flag-name">${fl.name}</div>
+            <div class="penalty-flag-desc">${fl.desc}</div>
+            ${fl.cap < 100 ? `<div class="penalty-flag-desc" style="color:var(--warn); margin-top:3px;">Score capped at ${fl.cap}</div>` : ''}
+          </div>
+          <div class="penalty-value ${fl.penalty < 0 ? 'negative' : 'zero'}">${fl.penalty < 0 ? fl.penalty : '—'}</div>
+        </div>
+      `).join('');
+
+      document.getElementById('base-score-display').textContent = baseScore.toFixed(0) + ' / 100';
+      document.getElementById('total-penalty-display').textContent = totalPenalty + ' pts';
+      document.getElementById('final-score-display').textContent = score.toFixed(0) + ' / 100';
+    } else {
+      penaltySection.style.display = 'none';
+    }
+
     // Signal cards with contextual explanations
     const make = v.make.toLowerCase();
 
     function getLTFTStatus(val, make) {
       if (val === null || val === undefined) return 'neutral';
-      const isToyota = make === 'toyota';
-      // Toyota runs naturally negative LTFT — normalize expectation
-      const normalized = isToyota ? val + 4.5 : val;
+      const normalized = make === 'toyota' ? val + 4.5 : val;
       if (Math.abs(normalized) <= 3) return 'good';
       if (Math.abs(normalized) <= 7) return 'warn';
       return 'bad';
     }
-
     function getSTFTStatus(val) {
       if (val === null || val === undefined) return 'neutral';
       if (Math.abs(val) <= 5) return 'good';
       if (Math.abs(val) <= 10) return 'warn';
       return 'bad';
     }
-
     function getIdleCVStatus(val) {
       if (val === null || val === undefined) return 'neutral';
       if (val <= 10) return 'good';
       if (val <= 20) return 'warn';
       return 'bad';
     }
-
     function getCatalystStatus(val) {
       if (val === null || val === undefined) return 'neutral';
       if (val >= 450 && val <= 750) return 'good';
       if (val >= 350 && val < 450) return 'warn';
       return 'bad';
     }
-
     function getCoolantStatus(val) {
       if (val === null || val === undefined) return 'neutral';
       if (val >= 85) return 'good';
       if (val >= 70) return 'warn';
       return 'bad';
     }
-
     function getLTFTExplanation(val, make) {
       if (val === null || val === undefined) return 'Not captured in this session.';
-      const isToyota = make === 'toyota';
-      const normalized = isToyota ? val + 4.5 : val;
-      if (Math.abs(normalized) <= 3) return 'Fuel system is well-balanced. The engine computer isn\'t fighting to compensate for any imbalance.';
+      const normalized = make === 'toyota' ? val + 4.5 : val;
+      if (Math.abs(normalized) <= 3) return "Fuel system is well-balanced. The engine computer isn't fighting to compensate for any imbalance.";
       if (val > 7) return 'Engine is running lean — the computer is adding extra fuel. Could indicate a vacuum leak, weak injector, or dirty MAF sensor.';
       if (val < -7) return 'Engine is running rich — the computer is reducing fuel. Could indicate a leaking injector, faulty O2 sensor, or fuel pressure issue.';
       return 'Mild fuel correction detected. Worth monitoring but not immediately concerning at this level.';
     }
-
     function getSTFTExplanation(val) {
       if (val === null || val === undefined) return 'Not captured in this session.';
       if (Math.abs(val) <= 5) return 'Short-term fuel adjustments are normal. The engine is maintaining proper air-fuel mix without excessive corrections.';
       if (Math.abs(val) <= 10) return 'Moderate short-term corrections detected. The engine is compensating for something — acceptable if LTFT is also stable.';
       return 'Large short-term fuel swings detected. This suggests the engine is struggling to maintain proper fuel balance under load.';
     }
-
     function getIdleCVExplanation(val) {
-      if (val === null || val === undefined) return 'Engine didn\'t reach operating temp during this session — idle stability could not be measured.';
+      if (val === null || val === undefined) return "Engine didn't reach operating temp during this session — idle stability could not be measured.";
       if (val <= 10) return 'Engine idles very smoothly and consistently. This is the strongest single indicator of good engine mechanical health.';
       if (val <= 20) return 'Some idle instability detected. Could be normal for higher mileage, or may indicate minor issues like dirty fuel injectors or worn spark plugs.';
       return 'High idle instability — the RPM is fluctuating significantly at warm idle. This is one of the clearest signals of engine wear or mechanical issues.';
     }
-
     function getCatalystExplanation(val) {
       if (val === null || val === undefined) return 'Not captured in this session.';
-      if (val >= 450 && val <= 750) return 'Catalytic converter is operating at a healthy temperature, indicating it\'s working efficiently.';
-      if (val < 350) return 'Catalyst temperature is lower than expected. Could indicate the engine wasn\'t fully warmed up or a catalyst efficiency issue.';
+      if (val >= 450 && val <= 750) return "Catalytic converter is operating at a healthy temperature, indicating it's working efficiently.";
+      if (val < 350) return "Catalyst temperature is lower than expected. Could indicate the engine wasn't fully warmed up or a catalyst efficiency issue.";
       return 'Catalyst running hotter than normal. May indicate engine running rich or converter starting to fail.';
     }
-
     function getCoolantExplanation(val) {
       if (val === null || val === undefined) return 'Not captured in this session.';
       if (val >= 85) return 'Engine reached full operating temperature during this scan. All readings are from a fully warmed engine — most reliable condition.';
       if (val >= 70) return 'Engine partially warmed. Some readings (especially fuel trims) may still be influenced by the warm-up phase.';
-      return 'Engine never fully warmed up during this session. Fuel trim and idle readings may not reflect the engine\'s true baseline behavior.';
+      return "Engine never fully warmed up during this session. Fuel trim and idle readings may not reflect the engine's true baseline behavior.";
     }
-
     function getLTFTRange(make) {
       return make === 'toyota' ? 'Normal for Toyota: −6% to −2%' : 'Normal for Honda: −2% to +4%';
     }
 
     const signalDefs = [
-      {
-        key: 'ltft',
-        label: 'LTFT',
-        plainName: 'Long-Term Fuel Trim',
-        value: f.LTFT_mean,
-        unit: '%',
-        decimals: 2,
-        status: getLTFTStatus(f.LTFT_mean, make),
-        explanation: getLTFTExplanation(f.LTFT_mean, make),
-        range: getLTFTRange(make),
-      },
-      {
-        key: 'stft',
-        label: 'STFT',
-        plainName: 'Short-Term Fuel Trim',
-        value: f.STFT_mean,
-        unit: '%',
-        decimals: 2,
-        status: getSTFTStatus(f.STFT_mean),
-        explanation: getSTFTExplanation(f.STFT_mean),
-        range: 'Normal range: −5% to +5%',
-      },
-      {
-        key: 'idle_cv',
-        label: 'IDLE CV',
-        plainName: 'Idle Stability',
-        value: f.warm_idle_cv,
-        unit: '%',
-        decimals: 1,
-        status: getIdleCVStatus(f.warm_idle_cv),
-        explanation: getIdleCVExplanation(f.warm_idle_cv),
-        range: 'Healthy: under 10% variation',
-      },
-      {
-        key: 'catalyst',
-        label: 'CATALYST TEMP',
-        plainName: 'Catalytic Converter',
-        value: f.catalyst_temp,
-        unit: '°C',
-        decimals: 0,
-        status: getCatalystStatus(f.catalyst_temp),
-        explanation: getCatalystExplanation(f.catalyst_temp),
-        range: 'Healthy range: 450°C – 750°C',
-      },
-      {
-        key: 'coolant',
-        label: 'COOLANT MAX',
-        plainName: 'Engine Temperature',
-        value: f.coolant_max,
-        unit: '°C',
-        decimals: 0,
-        status: getCoolantStatus(f.coolant_max),
-        explanation: getCoolantExplanation(f.coolant_max),
-        range: 'Full operating temp: 85°C+',
-      },
-      {
-        key: 'pids',
-        label: 'PIDS DETECTED',
-        plainName: 'Data Coverage',
-        value: f.pids_detected,
-        unit: '',
-        decimals: 0,
+      { key:'ltft', label:'LTFT', plainName:'Long-Term Fuel Trim', value:f.LTFT_mean, unit:'%', decimals:2, status:getLTFTStatus(f.LTFT_mean,make), explanation:getLTFTExplanation(f.LTFT_mean,make), range:getLTFTRange(make) },
+      { key:'stft', label:'STFT', plainName:'Short-Term Fuel Trim', value:f.STFT_mean, unit:'%', decimals:2, status:getSTFTStatus(f.STFT_mean), explanation:getSTFTExplanation(f.STFT_mean), range:'Normal range: −5% to +5%' },
+      { key:'idle_cv', label:'IDLE CV', plainName:'Idle Stability', value:f.warm_idle_cv, unit:'%', decimals:1, status:getIdleCVStatus(f.warm_idle_cv), explanation:getIdleCVExplanation(f.warm_idle_cv), range:'Healthy: under 10% variation' },
+      { key:'catalyst', label:'CATALYST TEMP', plainName:'Catalytic Converter', value:f.catalyst_temp, unit:'°C', decimals:0, status:getCatalystStatus(f.catalyst_temp), explanation:getCatalystExplanation(f.catalyst_temp), range:'Healthy range: 450°C – 750°C' },
+      { key:'coolant', label:'COOLANT MAX', plainName:'Engine Temperature', value:f.coolant_max, unit:'°C', decimals:0, status:getCoolantStatus(f.coolant_max), explanation:getCoolantExplanation(f.coolant_max), range:'Full operating temp: 85°C+' },
+      { key:'pids', label:'PIDS DETECTED', plainName:'Data Coverage', value:f.pids_detected, unit:'', decimals:0,
         status: f.pids_detected >= 8 ? 'good' : f.pids_detected >= 5 ? 'warn' : 'bad',
-        explanation: f.pids_detected >= 8
-          ? 'Good signal coverage. Most key engine parameters were captured successfully in this session.'
-          : f.pids_detected >= 5
-          ? 'Partial signal coverage. Some PIDs dropped out — score is based on available signals only.'
-          : 'Low signal coverage. Several key PIDs were missing. Consider rescanning for a more complete picture.',
-        range: 'Recommended: 8 or more',
-      },
+        explanation: f.pids_detected >= 8 ? 'Good signal coverage. Most key engine parameters were captured successfully.' : f.pids_detected >= 5 ? 'Partial signal coverage. Some PIDs dropped out — score based on available signals only.' : 'Low signal coverage. Several key PIDs were missing. Consider rescanning.',
+        range: 'Recommended: 8 or more' },
     ];
 
     const grid = document.getElementById('signals-grid');
@@ -1102,9 +1418,7 @@
           <span class="signal-label">${sig.label}</span>
           <span class="signal-status-dot"></span>
         </div>
-        <div class="signal-value">
-          ${sig.value !== null && sig.value !== undefined ? Number(sig.value).toFixed(sig.decimals) : '—'}<span class="signal-unit">${sig.unit}</span>
-        </div>
+        <div class="signal-value">${sig.value !== null && sig.value !== undefined ? Number(sig.value).toFixed(sig.decimals) : '—'}<span class="signal-unit">${sig.unit}</span></div>
         <div class="signal-plain-name">${sig.plainName}</div>
         <div class="signal-explanation">${sig.explanation}</div>
         <div class="signal-range">${sig.range}</div>
@@ -1112,14 +1426,19 @@
     `).join('');
 
     document.getElementById('results').classList.add('show');
+    window.scrollTo(0, 0);
   }
 
   function resetForm() {
     document.getElementById('results').classList.remove('show');
+    document.getElementById('questionnaire-card').classList.remove('show');
     document.getElementById('form-card').style.display = 'block';
     document.getElementById('scan-form').reset();
     document.getElementById('file-name').textContent = '';
     document.getElementById('error-box').classList.remove('show');
+    document.getElementById('q-error-box').classList.remove('show');
+    document.querySelectorAll('.q-option').forEach(o => o.classList.remove('selected'));
+    window.scrollTo(0, 0);
   }
 </script>
 </body>
