@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>ClearTitle — Engine Health Scanner</title>
+  <title>EngineIQ — Engine Health Scanner</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
   <style>
@@ -829,8 +829,8 @@
     <div class="logo">
       <span class="logo-mark">Beta</span>
     </div>
-    <h1>Clear<span>Title</span></h1>
-    <p class="tagline">// OBD-II engine health scoring for used car buyers</p>
+    <h1>Engine<span>IQ</span></h1>
+    <p class="tagline">// OBD-II engine health and deal intelligence for used car buyers</p>
   </header>
 
   <!-- Form card -->
@@ -1120,7 +1120,7 @@
         <div class="deal-header">
           <div>
             <div class="deal-title">Want to know if the deal is worth it?</div>
-            <div class="deal-copy">Add the asking price and a clean-title comparison. ClearTitle will estimate a buy, negotiate, or avoid recommendation from the engine report.</div>
+            <div class="deal-copy">Add the asking price and a clean-title comparison. EngineIQ will estimate a buy, negotiate, or avoid recommendation from the engine report.</div>
           </div>
           <button type="button" class="btn-secondary" onclick="showDealForm()">Check Deal</button>
         </div>
@@ -1164,7 +1164,7 @@
   </div>
 
   <footer>
-    <p class="footer-text">ClearTitle — Engine health scoring for used car buyers // Built with real OBD-II field data</p>
+    <p class="footer-text">EngineIQ — Engine health scoring for used car buyers // Built with real OBD-II field data</p>
   </footer>
 
 </div>
@@ -1706,7 +1706,7 @@
         status: f.pids_detected >= 8 ? 'good' : f.pids_detected >= 5 ? 'warn' : 'bad',
         explanation: f.pids_detected >= 8 ? 'Good signal coverage. Most key engine parameters were captured successfully.' : f.pids_detected >= 5 ? 'Partial signal coverage. Some PIDs dropped out — score based on available signals only.' : 'Low signal coverage. Several key PIDs were missing. Consider rescanning.',
         range: 'Recommended: 8 or more',
-        help:'These are the car data signals ClearTitle was able to read. More signals means the report has more evidence. Fewer signals means the score should be treated with more caution.' },
+        help:'These are the car data signals EngineIQ was able to read. More signals means the report has more evidence. Fewer signals means the score should be treated with more caution.' },
     ];
 
     const grid = document.getElementById('signals-grid');
